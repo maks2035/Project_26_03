@@ -1,6 +1,7 @@
 ﻿
 #include <iostream>
 #include <opencv2/opencv.hpp>
+#include <opencv2/videoio.hpp>
 #include <vector>
 cv::RNG rng(12345);
 
@@ -69,6 +70,13 @@ int main()
    cv::VideoCapture cap1(A1);
    //cv::VideoCapture cap1(A2);
 
+   //cv::VideoWriter video("output_second.mp4", cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 30, cv::Size(320, 240));
+   cv::VideoWriter video("output_first.mp4", cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 30, cv::Size(320, 240));
+   if (!video.isOpened()) {
+      std::cout << "Error: could not open video writer" << std::endl;
+      return -1;
+   }
+
    if (!cap1.isOpened()) {
       std::cout << "Ошибка загрузки первого видео" << std::endl;
       return -1;
@@ -96,10 +104,17 @@ int main()
       print_Contours_and_Text(frame, contour_frame);
 
       imshow("result", contour_frame);
+
+      cv::resize(contour_frame, contour_frame, cv::Size(320, 240));
+      video << contour_frame;
+
       char c = (char) cv::waitKey(30);
       if (c == 27) break;
 
    };
+
+   video.release();
+
    cap1.release();
    cv::destroyAllWindows();
    return 0;
