@@ -73,7 +73,7 @@ int main()
    //cv::VideoWriter video("output_second.mp4", cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 30, cv::Size(320, 240));
    cv::VideoWriter video("output_first.mp4", cv::VideoWriter::fourcc('a', 'v', 'c', '1'), 30, cv::Size(320, 240));
    if (!video.isOpened()) {
-      std::cout << "Error: could not open video writer" << std::endl;
+      std::cout << "Ошибка открытия видео для сохранения" << std::endl;
       return -1;
    }
 
