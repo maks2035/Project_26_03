@@ -8,53 +8,77 @@ cv::RNG rng(12345);
 
 void print_Contours(cv::Mat& frame, cv::Mat& contour_frame) {
 
-   cv::Mat  gauss, edges, gray;
+   cv::Mat  gauss, edges, hsv, mask;
 
-   cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-   cv::GaussianBlur(gray, gauss, cv::Size(3, 3), 0);
-   cv::Canny(gauss, edges, 40, 200);
+   GaussianBlur(frame, gauss, cv::Size(15, 15), 0);
 
-   std::vector<std::vector<cv::Point> > contours;
+   cvtColor(gauss, hsv, cv::COLOR_BGR2HSV);
 
-   std::vector<cv::Vec4i> hierarchy;
-   findContours(edges, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+   cv::Vec3b lower_hsv = cv::Vec3b(100, 10, 140);
+   cv::Vec3b upper_hsv = cv::Vec3b(255, 60, 255);
 
-   for (size_t i = 0; i < contours.size(); i++) {
+   inRange(hsv, lower_hsv, upper_hsv, mask);
 
-      cv::Scalar color = cv::Scalar(0, 225 - (contours.size()-i)*5, 0);
+   Canny(mask, edges, 40, 200);
 
-      drawContours(contour_frame, contours, (int)i, color, 1, cv::LINE_8, hierarchy, 0);
-
-   }
-}
-
-void print_Contours_and_Text(cv::Mat& frame, cv::Mat& contour_frame) {
-
-   cv::Mat  gauss, edges, gray;
-
-   cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-   cv::GaussianBlur(gray, gauss, cv::Size(3, 3), 0);
-   cv::Canny(gauss, edges, 40, 200);
-
-   std::vector<std::vector<cv::Point> > contours;
+   dilate(edges, edges, getStructuringElement(cv::MORPH_RECT, cv::Size(15, 15)));
+   erode(edges, edges, getStructuringElement(cv::MORPH_RECT, cv::Size(15, 15)));
 
    std::vector<cv::Vec4i> hierarchy;
-   findContours(edges, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);
+   std::vector<std::vector< cv::Point>> contours;
+   findContours(edges, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
 
    for (size_t i = 0; i < contours.size(); i++) {
       double epsilon = 0.01 * arcLength(contours[i], true);
       std::vector<cv::Point> approx;
       approxPolyDP(contours[i], approx, epsilon, true);
 
-      cv::Scalar color = cv::Scalar(0, 255, 0);
+      // Проверяем, является ли контур четырехугольником
+      if (approx.size() == 4 && cv::isContourConvex(approx)) {
 
-      drawContours(contour_frame, contours, (int)i, color, 2, cv::LINE_8, hierarchy, 0);
+         cv::Scalar color = cv::Scalar(0, 225 - (contours.size() - i) * 5, 0);
 
+         drawContours(contour_frame, contours, (int)i, color, 1, cv::LINE_8, hierarchy, 0);
+      }
+   }
+}
 
-      cv::Moments M = moments(approx);
-      cv::Point center(M.m10 / M.m00, M.m01 / M.m00);
-      if (approx.size() == 4) {
-         putText(contour_frame, "Rectangle", center, cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 255, 0), 2);
+void print_Contours_and_Text(cv::Mat& frame, cv::Mat& contour_frame) {
+
+   cv::Mat  gauss, edges, hsv, mask;
+
+   GaussianBlur(frame, gauss, cv::Size(15, 15), 0);
+
+   cvtColor(gauss, hsv, cv::COLOR_BGR2HSV);
+
+   cv::Vec3b lower_hsv = cv::Vec3b(100, 10, 140);
+   cv::Vec3b upper_hsv = cv::Vec3b(255, 60, 255);
+
+   inRange(hsv, lower_hsv, upper_hsv, mask);
+
+   Canny(mask, edges, 40, 200);
+
+   dilate(edges, edges, getStructuringElement(cv::MORPH_RECT, cv::Size(15, 15)));
+   erode(edges, edges, getStructuringElement(cv::MORPH_RECT, cv::Size(15, 15)));
+
+   std::vector<cv::Vec4i> hierarchy;
+   std::vector<std::vector< cv::Point>> contours;
+   findContours(edges, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+
+   for (size_t i = 0; i < contours.size(); i++) {
+      double epsilon = 0.01 * arcLength(contours[i], true);
+      std::vector<cv::Point> approx;
+      approxPolyDP(contours[i], approx, epsilon, true);
+
+      // Проверяем, является ли контур четырехугольником
+      if (approx.size() == 4 && cv::isContourConvex(approx)) {
+         cv::Scalar color = cv::Scalar(0, 255, 0);
+         drawContours(contour_frame, contours, (int)i, color, 2, cv::LINE_8, hierarchy, 0);
+
+         // Рисуем текст "Rectangle" в центре четырехугольника
+         cv::Moments M = moments(approx);
+         cv::Point center(M.m10 / M.m00, M.m01 / M.m00);
+         putText(contour_frame, "Rectangle", center, cv::FONT_HERSHEY_SIMPLEX, 1, color, 2);
       }
 
    }
