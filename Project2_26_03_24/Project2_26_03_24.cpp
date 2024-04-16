@@ -33,7 +33,6 @@ void print_Contours(cv::Mat& frame, cv::Mat& contour_frame) {
       std::vector<cv::Point> approx;
       approxPolyDP(contours[i], approx, epsilon, true);
 
-      // Проверяем, является ли контур четырехугольником
       if (approx.size() == 4 && cv::isContourConvex(approx)) {
 
          cv::Scalar color = cv::Scalar(0, 225 - (contours.size() - i) * 5, 0);
@@ -70,12 +69,10 @@ void print_Contours_and_Text(cv::Mat& frame, cv::Mat& contour_frame) {
       std::vector<cv::Point> approx;
       approxPolyDP(contours[i], approx, epsilon, true);
 
-      // Проверяем, является ли контур четырехугольником
       if (approx.size() == 4 && cv::isContourConvex(approx)) {
          cv::Scalar color = cv::Scalar(0, 255, 0);
          drawContours(contour_frame, contours, (int)i, color, 2, cv::LINE_8, hierarchy, 0);
 
-         // Рисуем текст "Rectangle" в центре четырехугольника
          cv::Moments M = moments(approx);
          cv::Point center(M.m10 / M.m00, M.m01 / M.m00);
          putText(contour_frame, "Rectangle", center, cv::FONT_HERSHEY_SIMPLEX, 1, color, 2);
